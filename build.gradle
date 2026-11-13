@@ -1,22 +1,24 @@
 plugins {
-    id 'com.github.ben-manes.versions' version '0.17.0'
-    id 'com.github.kt3k.coveralls' version '2.8.2'
+    id 'java-library'
+    id 'groovy'
+    id 'maven-publish'
+    id 'jacoco'
 }
 
-
 group = 'no.fint'
-version = project.findProperty("version") == null ? "0.0.1-SNAPSHOT" : (String) project.findProperty("version")
+version = providers.gradleProperty('version').getOrElse('4.0.0-SNAPSHOT')
 
-apply plugin: 'groovy'
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'jacoco'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
 
-sourceCompatibility = 1.8
-
-jar {
-    baseName = 'fint-event-model'
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
 }
 
 repositories {
@@ -26,7 +28,7 @@ repositories {
 publishing {
     repositories {
         maven {
-            url "https://repo.fintlabs.no/releases"
+            url = uri('https://repo.fintlabs.no/releases')
             credentials {
                 username = System.getenv("REPOSILITE_USERNAME")
                 password = System.getenv("REPOSILITE_PASSWORD")
@@ -43,36 +45,62 @@ publishing {
     }
 }
 
-apply from: 'https://raw.githubusercontent.com/FINTlibs/fint-buildscripts/v1.3.0/dependencies.gradle'
 dependencies {
-    compile('com.fasterxml.jackson.core:jackson-databind:2.9.5')
-    compile("org.projectlombok:lombok:${lombokVersion}")
-    compileOnly('org.slf4j:slf4j-api:1.7.25')
+    api platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    api 'tools.jackson.core:jackson-databind'
 
-    testCompile('org.slf4j:slf4j-simple:1.7.25')
-    testCompile('cglib:cglib-nodep:3.2.5')
-    testCompile("org.spockframework:spock-core:${spockSpringVersion}")
-}
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.slf4j:slf4j-api'
 
-task wrapper(type: Wrapper) {
-    gradleVersion = gradleVersion
+    testImplementation 'org.spockframework:spock-core:2.4-groovy-5.0'
+    testImplementation 'org.apache.groovy:groovy-json'
+    testImplementation 'org.springframework.boot:spring-boot-starter-jackson'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 javadoc {
-    source = sourceSets.main.allJava
-    classpath = configurations.compile
     options.windowTitle = 'FINT Event Model'
+    options.encoding = 'UTF-8'
     destinationDir = file('./javadocs/')
 }
 
 test {
+    useJUnitPlatform()
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
 }
 
+jacoco {
+    toolVersion = '0.8.16'
+}
+
 jacocoTestReport {
+    dependsOn test
     reports {
-        xml.enabled true
+        xml.required = true
+        html.required = true
     }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn test
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.95
+            }
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+check {
+    dependsOn jacocoTestReport, jacocoTestCoverageVerification
 }

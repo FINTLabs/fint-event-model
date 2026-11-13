@@ -1,8 +1,7 @@
 package no.fint.event.model
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.json.JsonMapper
 import no.fint.event.model.testutils.TestDto
 import spock.lang.Specification
 
@@ -12,7 +11,7 @@ class EventUtilSpec extends Specification {
     def "Convert JSON string to Event object"() {
         given:
         def input = new Event('rogfk.no', 'employee', 'GET_ALL', 'vfs')
-        def json = new ObjectMapper().writeValueAsString(input)
+        def json = JsonMapper.builder().build().writeValueAsString(input)
 
         when:
         Event event = EventUtil.toEvent(json)
@@ -40,7 +39,7 @@ class EventUtilSpec extends Specification {
 
         when:
         String json = EventUtil.toJson(event)
-        def output = new ObjectMapper().readValue(json, Event)
+        def output = JsonMapper.builder().build().readValue(json, Event)
 
         then:
         output.orgId == 'rogfk.no'
@@ -78,22 +77,19 @@ class EventUtilSpec extends Specification {
         eventData[0].value == 'test'
     }
 
-    def "Return null when trying to convert from Event to json and JsonProcessingException is thrown "() {
+    def "Return null when event data cannot be serialized"() {
         given:
-        def objectMapper = Mock(ObjectMapper) {
-            writeValueAsString(_ as Event) >> {
-                throw new JsonProcessingException('Test exception')
-            }
-        }
+        def event = new Event()
+        event.addData(new FailingPayload())
 
         when:
-        def json = EventUtil.toJson(objectMapper, new Event())
+        def json = EventUtil.toJson(event)
 
         then:
         json == null
     }
 
-    def "Return null when trying to covert from json to Event and IOException is thrown"() {
+    def "Return null when invalid JSON raises a JacksonException"() {
         when:
         def event = EventUtil.toEvent('test')
 
@@ -103,7 +99,7 @@ class EventUtilSpec extends Specification {
 
     def "Read Event from event.json"() {
         given:
-        def objectMapper = new ObjectMapper()
+        def objectMapper = JsonMapper.builder().build()
         def json = "{\n" +
                 "  \"corrId\": \"a91cdb9b-0292-4baf-9a27-578642634129\",\n" +
                 "  \"action\": \"GET_ALL\",\n" +
@@ -140,5 +136,11 @@ class EventUtilSpec extends Specification {
         event.status == Status.NEW
         event.responseStatus == ResponseStatus.ERROR
         event.statusCode == "JEDI-XX"
+    }
+
+    static class FailingPayload {
+        String getValue() {
+            throw new IllegalStateException('Cannot read payload')
+        }
     }
 }
