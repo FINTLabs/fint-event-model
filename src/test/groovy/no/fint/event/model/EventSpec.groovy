@@ -1,6 +1,6 @@
 package no.fint.event.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import groovy.json.JsonSlurper
 import spock.lang.Specification
 
@@ -177,7 +177,7 @@ class EventSpec extends Specification {
 
         when:
         def jsonSlurper = new JsonSlurper()
-        def objectMapper = new ObjectMapper()
+        def objectMapper = JsonMapper.builder().build()
         def result = objectMapper.writeValueAsString(event.getResponse())
         println(result)
         def object = jsonSlurper.parseText(result)
