@@ -54,7 +54,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.slf4j:slf4j-api'
 
-    testImplementation 'org.spockframework:spock-core:2.4-groovy-5.0'
+    testImplementation 'org.spockframework:spock-core:2.5-groovy-5.0'
     testImplementation 'org.apache.groovy:groovy-json'
     testImplementation 'org.springframework.boot:spring-boot-starter-jackson'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
