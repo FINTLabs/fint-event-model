@@ -46,11 +46,11 @@ publishing {
 }
 
 dependencies {
-    api platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    api platform('org.springframework.boot:spring-boot-dependencies:4.2.0')
     api 'tools.jackson.core:jackson-databind'
 
     compileOnly 'org.projectlombok:lombok'
-    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.2.0')
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'org.slf4j:slf4j-api'
 
